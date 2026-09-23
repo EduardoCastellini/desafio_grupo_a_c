@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Wallet;
 
 use App\Exceptions\InvalidTransactionException;
 use App\Models\Transaction;
 use App\Repositories\Contracts\DepositRepositoryInterface;
 
-final class DepositService
+class DepositService
 {
     public function __construct(
         private DepositRepositoryInterface $repository,
