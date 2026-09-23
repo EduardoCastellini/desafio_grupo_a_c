@@ -8,6 +8,8 @@ interface WalletRepositoryInterface
 {
     public function findById(int $id): ?Wallet;
 
+    public function findByUserId(int $userId): ?Wallet;
+
     public function findByTransactionKey(
         string $transactionKey
     ): ?Wallet;

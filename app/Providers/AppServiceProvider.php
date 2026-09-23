@@ -5,10 +5,12 @@ namespace App\Providers;
 use App\Repositories\Contracts\DepositRepositoryInterface;
 use App\Repositories\Contracts\LedgerEntryRepositoryInterface;
 use App\Repositories\Contracts\TransactionRepositoryInterface;
+use App\Repositories\Contracts\TransferRepositoryInterface;
 use App\Repositories\Contracts\WalletRepositoryInterface;
 use App\Repositories\Eloquent\DepositRepository;
 use App\Repositories\Eloquent\LedgerEntryRepository;
 use App\Repositories\Eloquent\TransactionRepository;
+use App\Repositories\Eloquent\TransferRepository;
 use App\Repositories\Eloquent\WalletRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(WalletRepositoryInterface::class, WalletRepository::class);
         $this->app->bind(TransactionRepositoryInterface::class, TransactionRepository::class);
+        $this->app->bind(TransferRepositoryInterface::class, TransferRepository::class);
         $this->app->bind(LedgerEntryRepositoryInterface::class, LedgerEntryRepository::class);
         $this->app->bind(DepositRepositoryInterface::class, DepositRepository::class);
     }

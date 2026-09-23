@@ -12,6 +12,11 @@ final class WalletRepository implements WalletRepositoryInterface
         return Wallet::query()->find($id);
     }
 
+    public function findByUserId(int $userId): ?Wallet
+    {
+        return Wallet::query()->where('user_id', $userId)->first();
+    }
+
     public function findByTransactionKey(
         string $transactionKey
     ): ?Wallet {
