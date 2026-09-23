@@ -1,5 +1,8 @@
 <?php
 
+use App\Exceptions\InsufficientBalanceException;
+use App\Exceptions\InvalidTransactionException;
+use App\Exceptions\TransactionAlreadyReversedException;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -27,4 +30,26 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (Throwable $throwable, Request $request) {
+            if ($throwable instanceof InsufficientBalanceException) {
+                return response()->json([
+                    'message' => $throwable->getMessage(),
+                ], 422);
+            }
+
+            if ($throwable instanceof InvalidTransactionException) {
+                return response()->json([
+                    'message' => $throwable->getMessage(),
+                ], 422);
+            }
+
+            if ($throwable instanceof TransactionAlreadyReversedException) {
+                return response()->json([
+                    'message' => $throwable->getMessage(),
+                ], 409);
+            }
+
+            return null;
+        });
     })->create();
