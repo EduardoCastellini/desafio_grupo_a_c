@@ -7,18 +7,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Enums\TransactionType;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 
-
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property TransactionType $type
+ * @property int $amount
+ * @property string $idempotency_key
+ * @property int|null $reversal_of_id
+ */
+#[Fillable(['user_id', 'type', 'amount', 'idempotency_key', 'reversal_of_id'])]
 class Transaction extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'type',
-        'amount',
-        'idempotency_key',
-        'reversal_of_id',
-    ];
-
     protected function casts(): array
     {
         return [
