@@ -1,13 +1,11 @@
 <?php
 
+use App\Models\LedgerEntry;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Support\Str;
-
-// beforeEach(function () {
-//     $this->user = User::factory()->create();
-// });
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('rotas financeiras exigem autenticação e validam valores monetários', function () {
     $user = User::factory()->create();
@@ -58,12 +56,12 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
 });
 
 test('reversão via HTTP rejeita transação já revertida e usa a chave de idempotência', function () {
-     $user = User::factory()->create();
+    $user = User::factory()->create();
     $this->actingAs($user);
 
     $wallet = Wallet::query()->create([
         'user_id' => $user->id,
-        'wallet_transaction_key' => 'wallet-'.$user->id,
+        'wallet_transaction_key' => 'wallet-' . $user->id,
         'balance' => 0,
     ]);
 
@@ -83,4 +81,38 @@ test('reversão via HTTP rejeita transação já revertida e usa a chave de idem
     $this->post(route('wallet.transactions.reverse', ['transaction' => $transaction->id]), [
         'idempotency_key' => (string) Str::uuid(),
     ])->assertStatus(409);
+});
+
+test('a página da wallet expõe saldo, chave e histórico', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    $wallet = Wallet::query()->create([
+        'user_id' => $user->id,
+        'wallet_transaction_key' => 'wallet-' . $user->id,
+        'balance' => 2500,
+    ]);
+
+    $transaction = Transaction::query()->create([
+        'user_id' => $user->id,
+        'type' => 'deposit',
+        'amount' => 2500,
+        'idempotency_key' => (string) Str::uuid(),
+    ]);
+
+    LedgerEntry::query()->create([
+        'transaction_id' => $transaction->id,
+        'wallet_id' => $wallet->id,
+        'amount' => 2500,
+    ]);
+
+    $this->get(route('wallet.show'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('wallet/show')
+            ->where('wallet.id', $wallet->id)
+            ->where('wallet.balance', 2500)
+            ->where('wallet.wallet_transaction_key', 'wallet-' . $user->id)
+            ->has('transactions', 1)
+        );
 });
