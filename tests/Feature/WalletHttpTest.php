@@ -28,7 +28,7 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
     $this->post($depositRoute, [
         'amount' => '10,00',
         'idempotency_key' => (string) Str::uuid(),
-    ])->assertRedirect(route('wallet.show'))
+    ])->assertRedirect(route('dashboard'))
         ->assertSessionHasNoErrors();
 
     $this->assertSame(1000, $wallet->fresh()->balance);
@@ -44,7 +44,7 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
         'wallet_transaction_key' => $destinationWallet->wallet_transaction_key,
         'amount' => '5.50',
         'idempotency_key' => (string) Str::uuid(),
-    ])->assertRedirect(route('wallet.show'));
+    ])->assertRedirect(route('dashboard'));
 
     $this->assertSame(450, $wallet->fresh()->balance);
     $this->assertSame(550, $destinationWallet->fresh()->balance);
@@ -76,14 +76,14 @@ test('reversão via HTTP rejeita transação já revertida e usa a chave de idem
 
     $this->post(route('wallet.transactions.reverse', ['transaction' => $transaction->id]), [
         'idempotency_key' => (string) Str::uuid(),
-    ])->assertRedirect(route('wallet.show'));
+    ])->assertRedirect(route('dashboard'));
 
     $this->post(route('wallet.transactions.reverse', ['transaction' => $transaction->id]), [
         'idempotency_key' => (string) Str::uuid(),
     ])->assertStatus(409);
 });
 
-test('a página da wallet expõe saldo, chave e histórico', function () {
+test('a página dashboard expõe saldo, chave e histórico', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
@@ -106,10 +106,10 @@ test('a página da wallet expõe saldo, chave e histórico', function () {
         'amount' => 2500,
     ]);
 
-    $this->get(route('wallet.show'))
+    $this->get(route('dashboard'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('wallet/show')
+            ->component('dashboard')
             ->where('wallet.id', $wallet->id)
             ->where('wallet.balance', 2500)
             ->where('wallet.wallet_transaction_key', 'wallet-' . $user->id)

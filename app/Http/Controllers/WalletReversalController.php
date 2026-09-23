@@ -21,7 +21,7 @@ class WalletReversalController extends Controller
             idempotencyKey: $request->validated()['idempotency_key'],
         );
 
-        return redirect()->route('wallet.show')->with(
+        return redirect()->route('dashboard')->with(
             'status',
             'Transação revertida com sucesso.',
         );

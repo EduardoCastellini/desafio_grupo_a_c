@@ -22,7 +22,7 @@ class WalletDepositController extends Controller
             idempotencyKey: $validated['idempotency_key'],
         );
 
-        return redirect()->route('wallet.show')->with(
+        return redirect()->route('dashboard')->with(
             'status',
             'Depósito realizado com sucesso.',
         );
