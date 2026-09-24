@@ -2,6 +2,7 @@
 
 namespace App\Services\Wallet;
 
+use App\Enums\TransactionType;
 use App\Exceptions\InvalidTransactionException;
 use App\Models\Transaction;
 use App\Repositories\Contracts\ReversalRepositoryInterface;
@@ -31,7 +32,7 @@ class ReverseTransactionService
             );
         }
 
-        if ($transaction->type === 'reversal') {
+        if ($transaction->type === TransactionType::REVERSAL) {
             throw new InvalidTransactionException(
                 'Não é possível reverter uma reversão.'
             );
