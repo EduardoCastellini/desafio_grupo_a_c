@@ -10,6 +10,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -32,22 +33,26 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $exceptions->render(function (Throwable $throwable, Request $request) {
-            if ($throwable instanceof InsufficientBalanceException) {
-                return response()->json([
-                    'message' => $throwable->getMessage(),
-                ], 422);
-            }
+            $status = match (true) {
+                $throwable instanceof TransactionAlreadyReversedException => 409,
+                $throwable instanceof InsufficientBalanceException,
+                $throwable instanceof InvalidTransactionException => 422,
+                default => null,
+            };
 
-            if ($throwable instanceof InvalidTransactionException) {
-                return response()->json([
-                    'message' => $throwable->getMessage(),
-                ], 422);
-            }
+            if ($status !== null) {
+                if ($request->header('X-Inertia')) {
+                    Inertia::flash('toast', [
+                        'type' => 'error',
+                        'message' => $throwable->getMessage(),
+                    ]);
 
-            if ($throwable instanceof TransactionAlreadyReversedException) {
+                    return redirect()->back();
+                }
+
                 return response()->json([
                     'message' => $throwable->getMessage(),
-                ], 409);
+                ], $status);
             }
 
             return null;
