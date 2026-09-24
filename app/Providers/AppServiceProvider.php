@@ -7,12 +7,14 @@ use App\Repositories\Contracts\LedgerEntryRepositoryInterface;
 use App\Repositories\Contracts\ReversalRepositoryInterface;
 use App\Repositories\Contracts\TransactionRepositoryInterface;
 use App\Repositories\Contracts\TransferRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Contracts\WalletRepositoryInterface;
 use App\Repositories\Eloquent\DepositRepository;
 use App\Repositories\Eloquent\LedgerEntryRepository;
 use App\Repositories\Eloquent\ReversalRepository;
 use App\Repositories\Eloquent\TransactionRepository;
 use App\Repositories\Eloquent\TransferRepository;
+use App\Repositories\Eloquent\UserRepository;
 use App\Repositories\Eloquent\WalletRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -33,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ReversalRepositoryInterface::class, ReversalRepository::class);
         $this->app->bind(LedgerEntryRepositoryInterface::class, LedgerEntryRepository::class);
         $this->app->bind(DepositRepositoryInterface::class, DepositRepository::class);
+        $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
     }
 
     /**
