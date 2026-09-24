@@ -16,6 +16,7 @@ type DashboardPageProps = {
         type: string;
         amount: number;
         created_at: string | null;
+        can_reverse: boolean;
     }>;
 };
 
@@ -45,6 +46,12 @@ export default function Dashboard({
     );
     const [isSubmittingDeposit, setIsSubmittingDeposit] = useState(false);
     const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
+    const [reversalKeys, setReversalKeys] = useState<Record<number, string>>(
+        {},
+    );
+    const [submittingReversalId, setSubmittingReversalId] = useState<
+        number | null
+    >(null);
 
     const walletBalance = wallet?.balance ?? 0;
     const walletKey = wallet?.wallet_transaction_key ?? '—';
@@ -114,6 +121,47 @@ export default function Dashboard({
                 },
                 onError: () => {
                     setIsSubmittingTransfer(false);
+                },
+            },
+        );
+    }
+
+    function handleReversal(transactionId: number) {
+        if (
+            !window.confirm(
+                'Deseja realmente reverter esta transação? Esta ação não pode ser desfeita.',
+            )
+        ) {
+            return;
+        }
+
+        const idempotencyKey =
+            reversalKeys[transactionId] ?? createIdempotencyKey();
+
+        if (!reversalKeys[transactionId]) {
+            setReversalKeys((currentKeys) => ({
+                ...currentKeys,
+                [transactionId]: idempotencyKey,
+            }));
+        }
+
+        setSubmittingReversalId(transactionId);
+
+        router.post(
+            walletRoutes.transactions.reverse.url(transactionId),
+            { idempotency_key: idempotencyKey },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setReversalKeys((currentKeys) => {
+                        const nextKeys = { ...currentKeys };
+                        delete nextKeys[transactionId];
+                        return nextKeys;
+                    });
+                    setSubmittingReversalId(null);
+                },
+                onError: () => {
+                    setSubmittingReversalId(null);
                 },
             },
         );
@@ -195,6 +243,24 @@ export default function Dashboard({
                                     >
                                         {formatCurrency(transaction.amount)}
                                     </span>
+                                    {transaction.can_reverse ? (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={
+                                                submittingReversalId !== null
+                                            }
+                                            onClick={() =>
+                                                handleReversal(transaction.id)
+                                            }
+                                        >
+                                            {submittingReversalId ===
+                                            transaction.id
+                                                ? 'Revertendo...'
+                                                : 'Reverter'}
+                                        </Button>
+                                    ) : null}
                                 </div>
                             ))
                         )}
