@@ -385,7 +385,7 @@ export default function Dashboard({
                                     onChange={(event) =>
                                         setDestinationKey(event.target.value)
                                     }
-                                    placeholder="wallet-123"
+                                    placeholder="wallet-2beaaa68-48fc-40af-9620-d38ad01b34fb"
                                 />
                             </div>
 
