@@ -31,6 +31,18 @@ function createIdempotencyKey(): string {
     return crypto.randomUUID();
 }
 
+function parseAmountToCents(value: string): number | null {
+    const normalizedValue = value.trim();
+
+    if (!/^\d+(?:\.\d{1,2})?$/.test(normalizedValue)) {
+        return null;
+    }
+
+    const [wholePart, decimalPart = ''] = normalizedValue.split('.');
+
+    return Number(wholePart) * 100 + Number(decimalPart.padEnd(2, '0'));
+}
+
 export default function Dashboard({
     wallet,
     transactions,
@@ -67,7 +79,9 @@ export default function Dashboard({
     function handleDepositSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        if (!depositAmount || Number(depositAmount) <= 0) {
+        const amountInCents = parseAmountToCents(depositAmount);
+
+        if (amountInCents === null || amountInCents <= 0) {
             return;
         }
 
@@ -76,7 +90,7 @@ export default function Dashboard({
         router.post(
             walletRoutes.deposit.url(),
             {
-                amount: depositAmount,
+                amount: amountInCents,
                 idempotency_key: depositKey,
             },
             {
@@ -97,7 +111,13 @@ export default function Dashboard({
     function handleTransferSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
-        if (!transferAmount || Number(transferAmount) <= 0 || !destinationKey) {
+        const amountInCents = parseAmountToCents(transferAmount);
+
+        if (
+            amountInCents === null ||
+            amountInCents <= 0 ||
+            !destinationKey
+        ) {
             return;
         }
 
@@ -106,7 +126,7 @@ export default function Dashboard({
         router.post(
             walletRoutes.transfer.url(),
             {
-                amount: transferAmount,
+                amount: amountInCents,
                 wallet_transaction_key: destinationKey,
                 idempotency_key: transferKey,
             },

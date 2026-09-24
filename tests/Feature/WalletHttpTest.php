@@ -13,7 +13,7 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
     $transferRoute = route('wallet.transfer');
 
     $this->post($depositRoute, [
-        'amount' => '10,00',
+        'amount' => 1000,
         'idempotency_key' => (string) Str::uuid(),
     ])->assertRedirect(route('login'));
 
@@ -26,7 +26,7 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
     ]);
 
     $this->post($depositRoute, [
-        'amount' => '10,00',
+        'amount' => 1000,
         'idempotency_key' => (string) Str::uuid(),
     ])->assertRedirect(route('dashboard'))
         ->assertSessionHasNoErrors();
@@ -42,7 +42,7 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
 
     $this->post($transferRoute, [
         'wallet_transaction_key' => $destinationWallet->wallet_transaction_key,
-        'amount' => '5.50',
+        'amount' => 550,
         'idempotency_key' => (string) Str::uuid(),
     ])->assertRedirect(route('dashboard'));
 
@@ -50,7 +50,15 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
     $this->assertSame(550, $destinationWallet->fresh()->balance);
 
     $this->post($depositRoute, [
-        'amount' => '0',
+        'amount' => 1,
+        'idempotency_key' => (string) Str::uuid(),
+    ])->assertRedirect(route('dashboard'))
+        ->assertSessionHasNoErrors();
+
+    $this->assertSame(451, $wallet->fresh()->balance);
+
+    $this->post($depositRoute, [
+        'amount' => 0,
         'idempotency_key' => (string) Str::uuid(),
     ])->assertSessionHasErrors(['amount']);
 });
