@@ -249,9 +249,9 @@ export default function Dashboard({
                                         <p className="text-xs text-muted-foreground">
                                             {transaction.created_at
                                                 ? new Date(
-                                                      transaction.created_at,
-                                                  ).toLocaleString('pt-BR')
-                                                : '—'}
+                                                      transaction.created_at,).toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo'})
+                                                : '—'
+                                            }
                                         </p>
                                     </div>
                                     <span
