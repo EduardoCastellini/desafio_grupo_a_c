@@ -21,7 +21,7 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
 
     $wallet = Wallet::query()->create([
         'user_id' => $user->id,
-        'wallet_transaction_key' => 'wallet-' . $user->id,
+        'wallet_transaction_key' => 'wallet-'.$user->id,
         'balance' => 0,
     ]);
 
@@ -36,7 +36,7 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
     $destinationUser = User::factory()->create();
     $destinationWallet = Wallet::query()->create([
         'user_id' => $destinationUser->id,
-        'wallet_transaction_key' => 'wallet-' . $destinationUser->id,
+        'wallet_transaction_key' => 'wallet-'.$destinationUser->id,
         'balance' => 0,
     ]);
 
@@ -63,13 +63,36 @@ test('rotas financeiras exigem autenticação e validam valores monetários', fu
     ])->assertSessionHasErrors(['amount']);
 });
 
+test('rotas financeiras aplicam rate limit para evitar abuso', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
+
+    Wallet::query()->create([
+        'user_id' => $user->id,
+        'wallet_transaction_key' => 'wallet-'.$user->id,
+        'balance' => 0,
+    ]);
+
+    for ($attempt = 0; $attempt < 11; $attempt++) {
+        $response = $this->post(route('wallet.deposit'), [
+            'amount' => 100,
+            'idempotency_key' => (string) Str::uuid(),
+        ]);
+
+        if ($attempt >= 10) {
+            $response->assertStatus(429);
+            break;
+        }
+    }
+});
+
 test('reversão via HTTP rejeita transação já revertida e usa a chave de idempotência', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
     $wallet = Wallet::query()->create([
         'user_id' => $user->id,
-        'wallet_transaction_key' => 'wallet-' . $user->id,
+        'wallet_transaction_key' => 'wallet-'.$user->id,
         'balance' => 0,
     ]);
 
@@ -97,7 +120,7 @@ test('a página dashboard expõe saldo, chave e histórico', function () {
 
     $wallet = Wallet::query()->create([
         'user_id' => $user->id,
-        'wallet_transaction_key' => 'wallet-' . $user->id,
+        'wallet_transaction_key' => 'wallet-'.$user->id,
         'balance' => 2500,
     ]);
 
@@ -120,7 +143,7 @@ test('a página dashboard expõe saldo, chave e histórico', function () {
             ->component('dashboard')
             ->where('wallet.id', $wallet->id)
             ->where('wallet.balance', 2500)
-            ->where('wallet.wallet_transaction_key', 'wallet-' . $user->id)
+            ->where('wallet.wallet_transaction_key', 'wallet-'.$user->id)
             ->has('transactions', 1)
         );
 });

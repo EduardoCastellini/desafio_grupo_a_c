@@ -12,7 +12,7 @@ test('cria um deposito valido e atualiza o saldo da carteira', function () {
     $user = User::factory()->create();
     Wallet::query()->create([
         'user_id' => $user->id,
-        'wallet_transaction_key' => 'wallet-'. $user->id,
+        'wallet_transaction_key' => 'wallet-'.$user->id,
         'balance' => 0,
     ]);
 
@@ -37,7 +37,7 @@ test('retry idempotente retorna a mesma transacao sem duplicar saldo', function 
     $user = User::factory()->create();
     Wallet::query()->create([
         'user_id' => $user->id,
-        'wallet_transaction_key' => 'wallet-'. $user->id,
+        'wallet_transaction_key' => 'wallet-'.$user->id,
         'balance' => 0,
     ]);
 
@@ -56,7 +56,7 @@ test('reuso indevido da chave de idempotencia e rejeitado', function () {
     $user = User::factory()->create();
     Wallet::query()->create([
         'user_id' => $user->id,
-        'wallet_transaction_key' => 'wallet-'. $user->id,
+        'wallet_transaction_key' => 'wallet-'.$user->id,
         'balance' => 0,
     ]);
 
@@ -72,7 +72,7 @@ test('valor zero ou negativo e rejeitado', function () {
     $user = User::factory()->create();
     Wallet::query()->create([
         'user_id' => $user->id,
-        'wallet_transaction_key' => 'wallet-'. $user->id,
+        'wallet_transaction_key' => 'wallet-'.$user->id,
         'balance' => 0,
     ]);
 
