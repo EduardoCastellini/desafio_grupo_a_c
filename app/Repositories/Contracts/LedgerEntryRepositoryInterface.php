@@ -3,7 +3,6 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\LedgerEntry;
-use App\Models\Transaction;
 
 interface LedgerEntryRepositoryInterface
 {

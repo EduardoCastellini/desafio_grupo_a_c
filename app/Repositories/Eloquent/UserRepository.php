@@ -20,7 +20,7 @@ final class UserRepository implements UserRepositoryInterface
             $user = User::query()->create($userData);
 
             $user->wallet()->create([
-                'wallet_transaction_key' => 'wallet-' . (string) Str::uuid(),
+                'wallet_transaction_key' => 'wallet-'.(string) Str::uuid(),
                 'balance' => 0,
             ]);
 

@@ -10,6 +10,7 @@ use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Repositories\Contracts\TransferRepositoryInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 final class TransferRepository implements TransferRepositoryInterface
 {
@@ -86,6 +87,16 @@ final class TransferRepository implements TransferRepositoryInterface
             }
 
             if ($sourceWallet->balance < $amount) {
+                Log::warning('wallet transfer insufficient balance', [
+                    'user_id' => $userId,
+                    'idempotency_key' => $idempotencyKey,
+                    'operation_type' => 'transfer',
+                    'amount' => $amount,
+                    'source_wallet_id' => $sourceWalletId,
+                    'destination_wallet_id' => $destinationWalletId,
+                    'source_balance' => $sourceWallet->balance,
+                ]);
+
                 throw new InsufficientBalanceException;
             }
 
@@ -109,6 +120,16 @@ final class TransferRepository implements TransferRepositoryInterface
 
             $sourceWallet->decrement('balance', $amount);
             $destinationWallet->increment('balance', $amount);
+
+            Log::info('wallet transfer created', [
+                'user_id' => $userId,
+                'transaction_id' => $transaction->id,
+                'idempotency_key' => $idempotencyKey,
+                'operation_type' => 'transfer',
+                'amount' => $amount,
+                'source_wallet_id' => $sourceWalletId,
+                'destination_wallet_id' => $destinationWalletId,
+            ]);
 
             return $transaction;
         });
@@ -137,6 +158,16 @@ final class TransferRepository implements TransferRepositoryInterface
             || ! $hasSourceEntry
             || ! $hasDestinationEntry
         ) {
+            Log::warning('wallet transfer idempotency violation', [
+                'user_id' => $transaction->user_id,
+                'transaction_id' => $transaction->id,
+                'idempotency_key' => $transaction->idempotency_key,
+                'operation_type' => 'transfer',
+                'amount' => $amount,
+                'source_wallet_id' => $sourceWalletId,
+                'destination_wallet_id' => $destinationWalletId,
+            ]);
+
             throw new InvalidTransactionException(
                 'A chave de idempotência já foi utilizada em outra operação.'
             );

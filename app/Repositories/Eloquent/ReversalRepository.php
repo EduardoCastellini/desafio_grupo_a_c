@@ -10,6 +10,7 @@ use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Repositories\Contracts\ReversalRepositoryInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 final class ReversalRepository implements ReversalRepositoryInterface
 {
@@ -29,6 +30,15 @@ final class ReversalRepository implements ReversalRepositoryInterface
                     $existingTransaction,
                     $transactionId,
                 );
+
+                Log::info('wallet reversal replayed', [
+                    'user_id' => $userId,
+                    'transaction_id' => $existingTransaction->id,
+                    'reversal_of_id' => $transactionId,
+                    'idempotency_key' => $idempotencyKey,
+                    'operation_type' => 'reversal',
+                    'amount' => $existingTransaction->amount,
+                ]);
 
                 return $existingTransaction;
             }
@@ -57,6 +67,15 @@ final class ReversalRepository implements ReversalRepositoryInterface
             }
 
             if ($originalTransaction->reversal()->exists()) {
+                Log::warning('wallet reversal duplicate attempt', [
+                    'user_id' => $userId,
+                    'transaction_id' => $transactionId,
+                    'reversal_of_id' => $originalTransaction->id,
+                    'idempotency_key' => $idempotencyKey,
+                    'operation_type' => 'reversal',
+                    'amount' => $originalTransaction->amount,
+                ]);
+
                 throw new TransactionAlreadyReversedException;
             }
 
@@ -113,6 +132,16 @@ final class ReversalRepository implements ReversalRepositoryInterface
                 $wallet->decrement('balance', $ledgerEntry->amount);
             }
 
+            Log::info('wallet reversal created', [
+                'user_id' => $userId,
+                'transaction_id' => $reversalTransaction->id,
+                'reversal_of_id' => $originalTransaction->id,
+                'idempotency_key' => $idempotencyKey,
+                'operation_type' => 'reversal',
+                'amount' => $originalTransaction->amount,
+                'wallet_ids' => $walletIds->all(),
+            ]);
+
             return $reversalTransaction;
         });
     }
@@ -125,6 +154,15 @@ final class ReversalRepository implements ReversalRepositoryInterface
             $transaction->type !== TransactionType::REVERSAL
             || $transaction->reversal_of_id !== $transactionId
         ) {
+            Log::warning('wallet reversal idempotency violation', [
+                'user_id' => $transaction->user_id,
+                'transaction_id' => $transaction->id,
+                'reversal_of_id' => $transactionId,
+                'idempotency_key' => $transaction->idempotency_key,
+                'operation_type' => 'reversal',
+                'amount' => $transaction->amount,
+            ]);
+
             throw new InvalidTransactionException(
                 'A chave de idempotência já foi utilizada em outra operação.'
             );

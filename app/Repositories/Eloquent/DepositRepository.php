@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\Wallet;
 use App\Repositories\Contracts\DepositRepositoryInterface;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 final class DepositRepository implements DepositRepositoryInterface
 {
@@ -37,10 +38,28 @@ final class DepositRepository implements DepositRepositoryInterface
                     $existingTransaction->type !== TransactionType::DEPOSIT ||
                     $existingTransaction->amount !== $amount
                 ) {
+                    Log::warning('wallet deposit idempotency violation', [
+                        'user_id' => $userId,
+                        'transaction_id' => $existingTransaction->id,
+                        'idempotency_key' => $idempotencyKey,
+                        'operation_type' => 'deposit',
+                        'amount' => $amount,
+                        'wallet_id' => $wallet->id,
+                    ]);
+
                     throw new InvalidTransactionException(
                         'A chave de idempotência já foi utilizada em outra operação.'
                     );
                 }
+
+                Log::info('wallet deposit replayed', [
+                    'user_id' => $userId,
+                    'transaction_id' => $existingTransaction->id,
+                    'idempotency_key' => $idempotencyKey,
+                    'operation_type' => 'deposit',
+                    'amount' => $amount,
+                    'wallet_id' => $wallet->id,
+                ]);
 
                 return $existingTransaction;
             }
@@ -59,6 +78,15 @@ final class DepositRepository implements DepositRepositoryInterface
             ]);
 
             $wallet->increment('balance', $amount);
+
+            Log::info('wallet deposit created', [
+                'user_id' => $userId,
+                'transaction_id' => $transaction->id,
+                'idempotency_key' => $idempotencyKey,
+                'operation_type' => 'deposit',
+                'amount' => $amount,
+                'wallet_id' => $wallet->id,
+            ]);
 
             return $transaction;
         });
